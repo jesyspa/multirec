@@ -45,22 +45,30 @@ type instance Alg U r = r
 --   Note that the index can change.
 type instance Alg (I xi) r = r -> r
 
+-- | Given a simple functor application, we fold over it.
+type instance Alg (f :.: I xi) r = f r -> r
+
 -- | For a sum, the algebra is a pair of two algebras.
 type instance Alg (f :+: g) r = (Alg f r, Alg g r)
 
--- | For a product where the left hand side is a constant, we
---   take the value as an additional argument.
-type instance Alg (K a :*: g) r = a -> Alg g r
-
--- | For a product where the left hand side is an identity, we
---   take the recursive result as an additional argument.
-type instance Alg (I xi :*: g) r = r -> Alg g r
+-- | We delegate product inference to Comp.
+type instance Alg (f :*: g) r = Comp f r -> Alg g r
 
 -- | Tags are ignored.
 type instance Alg (f :>: xi) r = Alg f r
 
 -- | Constructors are ignored.
 type instance Alg (C c f) r = Alg f r
+
+type family Comp (f :: (* -> *) -> * -> *) 
+                 (r :: *)
+                 :: *
+
+type instance Comp (I xi)    r = r
+
+type instance Comp (K a)     r = a
+
+type instance Comp (f :.: g) r = f (Comp g r)
 
 -- | The algebras passed to the fold have to work for all index types
 --   in the family. The additional witness argument is required only
