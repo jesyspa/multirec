@@ -92,9 +92,19 @@ instance Fold U where
 instance Fold (I xi) where
   alg f (I (K0 x)) = f x
 
+instance (Functor f) => Fold (f :.: I xi) where
+  alg f (D x) = f (fmap (unK0.unI) x)
+
 instance (Fold f, Fold g) => Fold (f :+: g) where
   alg (f, g) (L x) = alg f x
   alg (f, g) (R x) = alg g x
+
+-- All of the :*: instances should be possible to write as
+-- alg f (x :*: y) = alg (alg f x) y
+-- However, this leaves the type system unsatisfied, so we have
+-- to inline the definitions of alg.
+instance (Functor f, Fold g) => Fold ((f :.: I xi) :*: g) where
+  alg f (D x :*: y) = alg (f $ fmap (unK0.unI) x) y
 
 instance (Fold g) => Fold (K a :*: g) where
   alg f (K x :*: y) = alg (f x) y
